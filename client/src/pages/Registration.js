@@ -168,10 +168,15 @@ const Registration = () => {
     setLoading(true);
 
     try {
+      console.log('Sending form data:', formData);
+      console.log('API endpoint:', `${API_ENDPOINTS.PARTICIPANTS}/register`);
+      
       const response = await axios.post(`${API_ENDPOINTS.PARTICIPANTS}/register`, formData);
       setParticipant(response.data.participant);
       toast.success('Registration successful!');
     } catch (error) {
+      console.error('Registration error:', error);
+      console.error('Error response:', error.response?.data);
       toast.error(error.response?.data?.message || 'Registration failed');
     } finally {
       setLoading(false);

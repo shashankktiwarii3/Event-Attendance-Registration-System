@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { toast } from 'react-toastify';
 import { Search, User, Mail, Hash, Calendar, CheckCircle, XCircle } from 'lucide-react';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 
 const Container = styled.div`
   max-width: 800px;
@@ -262,22 +263,22 @@ const ParticipantLookup = () => {
       let response;
       
       if (searchType === 'registrationId') {
-        response = await axios.get(`/api/participants/${searchValue}`);
+        response = await axios.get(`${API_ENDPOINTS.PARTICIPANTS}/${searchValue}`);
         setParticipant(response.data.participant);
         
         // Fetch attendance for this participant
-        const attendanceResponse = await axios.get(`/api/attendance/participant/${searchValue}`);
+        const attendanceResponse = await axios.get(`${API_ENDPOINTS.ATTENDANCE}/participant/${searchValue}`);
         setAttendance(attendanceResponse.data.attendance);
       } else if (searchType === 'email') {
         // For email search, we'll need to get all participants and filter
-        const allParticipantsResponse = await axios.get('/api/participants');
+        const allParticipantsResponse = await axios.get(API_ENDPOINTS.PARTICIPANTS);
         const foundParticipant = allParticipantsResponse.data.participants.find(
           p => p.email.toLowerCase() === searchValue.toLowerCase()
         );
         
         if (foundParticipant) {
           setParticipant(foundParticipant);
-          const attendanceResponse = await axios.get(`/api/attendance/participant/${foundParticipant.registrationId}`);
+          const attendanceResponse = await axios.get(`${API_ENDPOINTS.ATTENDANCE}/participant/${foundParticipant.registrationId}`);
           setAttendance(attendanceResponse.data.attendance);
         } else {
           setParticipant(null);

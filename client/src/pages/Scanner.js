@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { toast } from 'react-toastify';
 import { QrCode, Camera, CheckCircle, XCircle } from 'lucide-react';
 import QrScanner from 'qr-scanner';
 import axios from 'axios';
 import AttendanceSuccessModal from '../components/AttendanceSuccessModal';
+import { API_ENDPOINTS } from '../config/api';
 
 const Container = styled.div`
   max-width: 800px;
@@ -216,61 +217,146 @@ const Input = styled.input`
 `;
 
 const Scanner = () => {
-  const [scanner, setScanner] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successAttendance, setSuccessAttendance] = useState(null);
+  const [isInitializing, setIsInitializing] = useState(false);
   const videoRef = useRef(null);
+  const scannerRef = useRef(null);
   const [manualId, setManualId] = useState('');
+
+  const stopScanner = useCallback(() => {
+    console.log('🛑 STOP SCANNER CALLED');
+    console.log('Scanner ref exists:', !!scannerRef.current);
+    if (scannerRef.current) {
+      console.log('Stopping and destroying scanner instance');
+      scannerRef.current.stop();
+      scannerRef.current.destroy();
+      scannerRef.current = null;
+    }
+    setIsScanning(false);
+    console.log('Set isScanning to false');
+    
+    // Stop video tracks
+    const video = document.querySelector('video');
+    if (video && video.srcObject) {
+      console.log('Stopping video tracks');
+      const tracks = video.srcObject.getTracks();
+      tracks.forEach(track => {
+        console.log('Stopping track:', track.kind);
+        track.stop();
+      });
+      video.srcObject = null;
+      console.log('Cleared video srcObject');
+    } else {
+      console.log('No video element or srcObject found');
+    }
+    console.log('🛑 STOP SCANNER COMPLETED');
+  }, []);
 
   useEffect(() => {
     return () => {
-      if (scanner) {
-        scanner.destroy();
+      console.log("Unmount cleanup: stopping scanner & camera");
+      if (scannerRef.current) {
+        scannerRef.current.stop();
+        scannerRef.current.destroy();
+      }
+      const video = document.querySelector('video');
+      if (video && video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
       }
     };
-  }, [scanner]);
+    // No dependencies → runs only on component unmount
+  }, []);
 
   const startScanner = async () => {
+    if (isInitializing || isScanning) {
+      console.log('Scanner already initializing or running');
+      return;
+    }
+
     try {
+      setIsInitializing(true);
+      console.log('Starting scanner...');
       const video = videoRef.current;
-      if (!video) return;
+      if (!video) {
+        console.error('Video element not found');
+        return;
+      }
+
+      // Clear any existing scanner
+      if (scannerRef.current) {
+        console.log('Destroying existing scanner');
+        scannerRef.current.stop();
+        scannerRef.current.destroy();
+      }
 
       const qrScanner = new QrScanner(
         video,
-        (result) => handleScan(result.data),
+        (result) => {
+          console.log('QR Code detected:', result.data);
+          handleScan(result.data);
+        },
         {
           highlightScanRegion: true,
           highlightCodeOutline: true,
         }
       );
 
+      console.log('Starting QR scanner...');
       await qrScanner.start();
-      setScanner(qrScanner);
+      
+      // Add a small delay to let the camera stabilize
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      scannerRef.current = qrScanner;
       setIsScanning(true);
       setResult(null);
+      console.log('Scanner started successfully');
     } catch (error) {
       console.error('Scanner error:', error);
       toast.error('Failed to start camera. Please check permissions.');
+      setIsScanning(false);
+    } finally {
+      setIsInitializing(false);
     }
-  };
-
-  const stopScanner = () => {
-    if (scanner) {
-      scanner.destroy();
-      setScanner(null);
-    }
-    setIsScanning(false);
   };
 
   const handleScan = async (qrData) => {
-    if (loading) return;
+    if (loading) {
+      return;
+    }
+    
+    console.log('QR Code scanned:', qrData);
+    
+    // STOP CAMERA IMMEDIATELY to prevent multiple scans
+    console.log('Stopping camera immediately to prevent multiple scans');
+    stopScanner();
     
     setLoading(true);
+    
     try {
-      const response = await axios.post('/api/attendance/scan', {
+      // Extract QR data details
+      let registrationId, name, email;
+      
+      try {
+        const parsedData = JSON.parse(qrData);
+        registrationId = parsedData.registrationId;
+        name = parsedData.name;
+        email = parsedData.email;
+        console.log('Extracted details from QR:', { registrationId, name, email });
+      } catch (error) {
+        // If not JSON, treat as direct registration ID
+        registrationId = qrData;
+        console.log('Using QR data as direct registration ID:', registrationId);
+      }
+      
+      // Now verify with server
+      console.log('Verifying with server...');
+      const response = await axios.post(`${API_ENDPOINTS.ATTENDANCE}/scan`, {
         qrData,
         scannedBy: 'scanner',
         location: 'main-hall'
@@ -282,11 +368,13 @@ const Scanner = () => {
         message: response.data.message
       });
 
-      // Show success modal instead of toast
+      // Show success modal
       setSuccessAttendance(response.data.attendance);
       setShowSuccessModal(true);
-      stopScanner();
+      
+      console.log('Attendance marked successfully');
     } catch (error) {
+      console.error('QR scan error:', error);
       setResult({
         success: false,
         message: error.response?.data?.message || 'Failed to mark attendance'
@@ -303,8 +391,12 @@ const Scanner = () => {
 
     setLoading(true);
     try {
+      console.log('Manual entry - looking up participant:', manualId);
+      console.log('API endpoint:', `${API_ENDPOINTS.PARTICIPANTS}/${manualId}`);
+      
       // First get participant by registration ID
-      const participantResponse = await axios.get(`/api/participants/${manualId}`);
+      const participantResponse = await axios.get(`${API_ENDPOINTS.PARTICIPANTS}/${manualId}`);
+      console.log('Participant found:', participantResponse.data);
       const participant = participantResponse.data.participant;
 
       // Then mark attendance
@@ -315,11 +407,13 @@ const Scanner = () => {
         timestamp: participant.registeredAt
       });
 
-      const response = await axios.post('/api/attendance/scan', {
+      console.log('Manual entry - marking attendance with QR data:', qrData);
+      const response = await axios.post(`${API_ENDPOINTS.ATTENDANCE}/scan`, {
         qrData,
         scannedBy: 'manual',
         location: 'main-hall'
       });
+      console.log('Attendance marked successfully:', response.data);
 
       setResult({
         success: true,
@@ -332,6 +426,8 @@ const Scanner = () => {
       setShowSuccessModal(true);
       setManualId('');
     } catch (error) {
+      console.error('Manual entry error:', error);
+      console.error('Error response:', error.response?.data);
       setResult({
         success: false,
         message: error.response?.data?.message || 'Failed to mark attendance'
@@ -352,10 +448,13 @@ const Scanner = () => {
     setShowSuccessModal(false);
     setSuccessAttendance(null);
     setResult(null);
-    // Optionally restart scanner
-    if (!isScanning) {
-      startScanner();
-    }
+    // Restart scanner for next scan
+    setTimeout(() => {
+      if (!isScanning) {
+        console.log('Restarting scanner for next scan');
+        startScanner();
+      }
+    }, 200); // Small delay to ensure modal is closed
   };
 
   return (
@@ -373,15 +472,49 @@ const Scanner = () => {
 
         <Controls>
           {!isScanning ? (
-            <StartButton onClick={startScanner} disabled={loading}>
+            <StartButton onClick={startScanner} disabled={loading || isInitializing}>
               <Camera size={20} />
-              Start Scanner
+              {isInitializing ? 'Starting...' : 'Start Scanner'}
             </StartButton>
           ) : (
             <StopButton onClick={stopScanner}>
               <XCircle size={20} />
               Stop Scanner
             </StopButton>
+          )}
+          
+          {!isScanning && !loading && !isInitializing && (
+            <div style={{ 
+              textAlign: 'center', 
+              marginTop: '1rem', 
+              color: '#718096',
+              fontSize: '0.9rem'
+            }}>
+              Camera stopped. Click "Start Scanner" to begin scanning.
+            </div>
+          )}
+          
+          {isInitializing && (
+            <div style={{ 
+              textAlign: 'center', 
+              marginTop: '1rem', 
+              color: '#667eea',
+              fontSize: '0.9rem'
+            }}>
+              Initializing camera...
+            </div>
+          )}
+          
+          {isScanning && (
+            <div style={{ 
+              textAlign: 'center', 
+              marginTop: '1rem', 
+              color: '#28a745',
+              fontSize: '0.9rem'
+            }}>
+              <Camera size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+              Camera active - Point at QR code
+            </div>
           )}
         </Controls>
 

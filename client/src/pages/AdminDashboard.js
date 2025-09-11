@@ -10,11 +10,11 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  LogOut,
-  CheckCircle
+  LogOut
 } from 'lucide-react';
 import axios from 'axios';
 import AdminLogin from '../components/AdminLogin';
+import { API_ENDPOINTS } from '../config/api';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -206,6 +206,11 @@ const StatusBadge = styled.span`
     background: #d4edda;
     color: #155724;
   `}
+  
+  ${props => props.status === 'absent' && `
+    background: #f8d7da;
+    color: #721c24;
+  `}
 `;
 
 const LoadingSpinner = styled.div`
@@ -238,20 +243,29 @@ const AdminDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await axios.get('/api/admin/dashboard');
+      console.log('Fetching dashboard data from:', `${API_ENDPOINTS.ADMIN}/dashboard`);
+      const response = await axios.get(`${API_ENDPOINTS.ADMIN}/dashboard`);
+      console.log('Dashboard data received:', response.data);
       setDashboardData(response.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      console.error('Error response:', error.response?.data);
       toast.error('Failed to fetch dashboard data');
     }
   };
 
   const fetchLiveFeed = async () => {
     try {
-      const response = await axios.get('/api/admin/live-feed');
+      console.log('Fetching live feed from:', `${API_ENDPOINTS.ADMIN}/live-feed`);
+      const response = await axios.get(`${API_ENDPOINTS.ADMIN}/live-feed`);
+      console.log('Live feed received:', response.data);
+      console.log('Total records received:', response.data.attendance?.length || 0);
+      console.log('Present count:', response.data.presentCount || 0);
+      console.log('Absent count:', response.data.absentCount || 0);
       setLiveFeed(response.data.attendance);
     } catch (error) {
       console.error('Error fetching live feed:', error);
+      console.error('Error response:', error.response?.data);
     }
   };
 
@@ -264,7 +278,7 @@ const AdminDashboard = () => {
 
   const handleExport = async () => {
     try {
-      const response = await axios.get('/api/admin/export/excel', {
+      const response = await axios.get(`${API_ENDPOINTS.ADMIN}/export/excel`, {
         responseType: 'blob'
       });
 
@@ -284,17 +298,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleCleanupLateStatus = async () => {
-    try {
-      const response = await axios.post('/api/admin/cleanup-late-status');
-      toast.success(`Cleanup completed! Updated ${response.data.updatedRecords} records.`);
-      // Refresh data after cleanup
-      await Promise.all([fetchDashboardData(), fetchLiveFeed()]);
-    } catch (error) {
-      console.error('Cleanup error:', error);
-      toast.error('Failed to cleanup late status records');
-    }
-  };
+
 
   // Check authentication on component mount
   useEffect(() => {
@@ -322,8 +326,14 @@ const AdminDashboard = () => {
 
     const loadDashboardData = async () => {
       setLoading(true);
-      await Promise.all([fetchDashboardData(), fetchLiveFeed()]);
-      setLoading(false);
+      try {
+        await Promise.all([fetchDashboardData(), fetchLiveFeed()]);
+      } catch (error) {
+        console.error('Error loading initial dashboard data:', error);
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
     };
 
     checkAuth();
@@ -340,6 +350,19 @@ const AdminDashboard = () => {
     }
   }, [isAuthenticated]);
 
+  const handleLogin = async () => {
+    setIsAuthenticated(true);
+    setLoading(true);
+    try {
+      await Promise.all([fetchDashboardData(), fetchLiveFeed()]);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('adminAuth');
     setIsAuthenticated(false);
@@ -349,7 +372,7 @@ const AdminDashboard = () => {
   };
 
   if (!isAuthenticated) {
-    return <AdminLogin onLogin={setIsAuthenticated} />;
+    return <AdminLogin onLogin={handleLogin} />;
   }
 
   if (loading) {
@@ -431,22 +454,9 @@ const AdminDashboard = () => {
             Export Excel
           </ExportButton>
           <Button 
-            onClick={handleCleanupLateStatus}
-            style={{ 
-              background: '#ffc107', 
-              color: '#212529',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-          >
-            <CheckCircle size={20} />
-            Cleanup Late Status
-          </Button>
-          <Button 
             onClick={handleLogout}
             style={{ 
-              background: '#dc3545', 
+              background: '#6c757d', 
               color: 'white',
               display: 'flex',
               alignItems: 'center',
@@ -461,7 +471,13 @@ const AdminDashboard = () => {
 
       <LiveFeedCard>
         <FeedHeader>
-          <FeedTitle>Live Attendance Feed</FeedTitle>
+          <FeedTitle>
+            Live Attendance Feed ({liveFeed.length} total)
+            <span style={{ fontSize: '0.9rem', fontWeight: 'normal', marginLeft: '1rem' }}>
+              Present: {liveFeed.filter(p => p.status === 'present').length} | 
+              Absent: {liveFeed.filter(p => p.status === 'absent').length}
+            </span>
+          </FeedTitle>
           <LastUpdated>
             Last updated: {new Date().toLocaleTimeString()}
           </LastUpdated>
@@ -486,7 +502,10 @@ const AdminDashboard = () => {
                     {record.status === 'late' ? 'PRESENT' : record.status.toUpperCase()}
                   </StatusBadge>
                   <FeedTime>
-                    {new Date(record.timestamp).toLocaleTimeString()}
+                    {record.status === 'present' 
+                      ? `Scanned: ${new Date(record.timestamp).toLocaleTimeString()}`
+                      : `Registered: ${new Date(record.timestamp).toLocaleTimeString()}`
+                    }
                   </FeedTime>
                 </div>
               </FeedItem>
