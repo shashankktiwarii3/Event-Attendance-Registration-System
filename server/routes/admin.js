@@ -5,91 +5,49 @@ const Participant = require('../models/Participant');
 const XLSX = require('xlsx');
 const moment = require('moment');
 
-// Get dashboard statistics
+// Get dashboard statistics (simplified to avoid timeouts)
 router.get('/dashboard', async (req, res) => {
   try {
-    const today = moment().startOf('day');
-    const yesterday = moment().subtract(1, 'day').startOf('day');
+    const today = moment().startOf('day').toDate();
+    const todayEnd = moment().endOf('day').toDate();
 
-    // Get today's statistics
-    const todayStats = await Attendance.aggregate([
-      {
-        $match: {
-          timestamp: {
-            $gte: today.toDate(),
-            $lt: moment(today).endOf('day').toDate()
-          }
-        }
-      },
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // Get yesterday's statistics for comparison
-    const yesterdayStats = await Attendance.aggregate([
-      {
-        $match: {
-          timestamp: {
-            $gte: yesterday.toDate(),
-            $lt: moment(yesterday).endOf('day').toDate()
-          }
-        }
-      },
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // Get total registered participants
-    const totalRegistered = await Participant.countDocuments({ isActive: true });
-
-    // Process today's stats
-    const todayAttendance = { present: 0, absent: 0 };
-    todayStats.forEach(stat => {
-      todayAttendance[stat._id] = stat.count;
+    // Simplified queries to avoid aggregation timeouts
+    const totalRegistered = await Participant.countDocuments();
+    const totalAttendance = await Attendance.countDocuments();
+    
+    // Get today's attendance count (simplified)
+    const todayAttendanceCount = await Attendance.countDocuments({
+      timestamp: { $gte: today, $lt: todayEnd }
     });
 
-    // Process yesterday's stats
-    const yesterdayAttendance = { present: 0, absent: 0 };
-    yesterdayStats.forEach(stat => {
-      yesterdayAttendance[stat._id] = stat.count;
+    // Get present count for today
+    const todayPresentCount = await Attendance.countDocuments({
+      timestamp: { $gte: today, $lt: todayEnd },
+      status: 'present'
     });
 
-    const todayTotal = todayAttendance.present;
-    const yesterdayTotal = yesterdayAttendance.present;
-
-    // Calculate trends
-    const attendanceTrend = yesterdayTotal > 0 ? 
-      ((todayTotal - yesterdayTotal) / yesterdayTotal * 100).toFixed(1) : 0;
-
-    // Get recent attendance (last 10 records)
+    // Get recent attendance (last 10 records) - simplified
     const recentAttendance = await Attendance.find()
-      .populate('participantId', 'name email registrationId')
+      .select('name email registrationId status timestamp location scannedBy')
       .sort({ timestamp: -1 })
-      .limit(10);
+      .limit(10)
+      .lean(); // Use lean() for better performance
 
     res.json({
       today: {
         totalRegistered,
-        totalAttended: todayTotal,
-        present: todayAttendance.present,
-        absent: totalRegistered - todayTotal,
-        attendanceRate: totalRegistered > 0 ? ((todayTotal / totalRegistered) * 100).toFixed(2) : 0
+        totalAttended: todayAttendanceCount,
+        present: todayPresentCount,
+        absent: totalRegistered - todayPresentCount,
+        attendanceRate: totalRegistered > 0 ? ((todayPresentCount / totalRegistered) * 100).toFixed(2) : 0
       },
       yesterday: {
-        totalAttended: yesterdayTotal,
-        present: yesterdayAttendance.present
+        totalAttended: 0, // Simplified - not calculating yesterday for now
+        present: 0
       },
       trends: {
-        attendanceChange: attendanceTrend,
-        direction: attendanceTrend > 0 ? 'up' : attendanceTrend < 0 ? 'down' : 'same'
+        attendanceChange: 0, // Simplified
+        direction: 'same'
       },
       recentAttendance
     });
@@ -315,19 +273,51 @@ router.get('/analytics', async (req, res) => {
   }
 });
 
-// Get live attendance feed
+// Get live attendance feed - show all participants with their status
 router.get('/live-feed', async (req, res) => {
   try {
-    const { limit = 20 } = req.query;
+    const { limit } = req.query;
 
-    const liveAttendance = await Attendance.find()
-      .populate('participantId', 'name email registrationId')
-      .sort({ timestamp: -1 })
-      .limit(parseInt(limit));
+    // Get all participants
+    let participantsQuery = Participant.find().sort({ registeredAt: -1 });
+    if (limit) {
+      participantsQuery = participantsQuery.limit(parseInt(limit));
+    }
+    const participants = await participantsQuery;
+
+    // Get all attendance records
+    const attendanceRecords = await Attendance.find();
+
+    // Create a map of attendance by registration ID
+    const attendanceMap = {};
+    attendanceRecords.forEach(record => {
+      attendanceMap[record.registrationId] = record;
+    });
+
+    // Combine participants with their attendance status
+    const liveFeed = participants.map(participant => {
+      const attendance = attendanceMap[participant.registrationId];
+      return {
+        _id: participant._id,
+        name: participant.name,
+        email: participant.email,
+        registrationId: participant.registrationId,
+        status: attendance ? attendance.status : 'absent',
+        timestamp: attendance ? attendance.timestamp : participant.registeredAt,
+        scannedBy: attendance ? attendance.scannedBy : 'not-scanned',
+        location: attendance ? attendance.location : 'not-scanned'
+      };
+    });
+
+    // Sort by timestamp (most recent first)
+    liveFeed.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     res.json({
-      attendance: liveAttendance,
-      lastUpdated: new Date().toISOString()
+      attendance: liveFeed,
+      lastUpdated: new Date().toISOString(),
+      totalRecords: liveFeed.length,
+      presentCount: liveFeed.filter(p => p.status === 'present').length,
+      absentCount: liveFeed.filter(p => p.status === 'absent').length
     });
   } catch (error) {
     console.error('Live feed error:', error);

@@ -256,4 +256,35 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// Delete attendance records by participant registration ID
+router.delete('/participant/:registrationId', async (req, res) => {
+  try {
+    const { registrationId } = req.params;
+    
+    const result = await Attendance.deleteMany({ registrationId });
+    
+    res.json({
+      message: 'Attendance records deleted successfully',
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Delete attendance error:', error);
+    res.status(500).json({ message: 'Failed to delete attendance records', error: error.message });
+  }
+});
+
+// Clear all attendance records
+router.delete('/clear-all', async (req, res) => {
+  try {
+    const result = await Attendance.deleteMany({});
+    res.json({
+      message: 'All attendance records deleted successfully',
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Clear all attendance error:', error);
+    res.status(500).json({ message: 'Failed to clear all attendance records', error: error.message });
+  }
+});
+
 module.exports = router;

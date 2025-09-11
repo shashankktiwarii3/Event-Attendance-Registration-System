@@ -7,10 +7,12 @@ const { v4: uuidv4 } = require('uuid');
 // Register a new participant
 router.post('/register', async (req, res) => {
   try {
+    console.log('Registration request body:', req.body);
     const { name, email } = req.body;
 
     // Validate input
     if (!name || !email) {
+      console.log('Validation failed - missing name or email:', { name, email });
       return res.status(400).json({ message: 'Name and email are required' });
     }
 
@@ -154,6 +156,20 @@ router.delete('/:id', async (req, res) => {
   } catch (error) {
     console.error('Delete participant error:', error);
     res.status(500).json({ message: 'Failed to delete participant', error: error.message });
+  }
+});
+
+// Clear all participants
+router.delete('/clear-all', async (req, res) => {
+  try {
+    const result = await Participant.deleteMany({});
+    res.json({
+      message: 'All participants deleted successfully',
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Clear all participants error:', error);
+    res.status(500).json({ message: 'Failed to clear all participants', error: error.message });
   }
 });
 

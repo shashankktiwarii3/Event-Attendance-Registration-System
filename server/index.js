@@ -12,6 +12,9 @@ app.use(cors({
     'http://localhost:3000',
     'https://nscc-qr.vercel.app',
     'https://nscc-qr-frontend.vercel.app',
+    'https://nscc-frontend-2nvam47y1-shashank-tiwaris-projects-fefdbac7.vercel.app',
+    'https://nscc-frontend.vercel.app',
+    'https://nscc-frontend-nyq59yd4i-shashank-tiwaris-projects-fefdbac7.vercel.app',
     'https://*.vercel.app'
   ],
   credentials: true
@@ -23,6 +26,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/participants', require('./routes/participants'));
 app.use('/api/attendance', require('./routes/attendance'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/seed', require('./routes/seed'));
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nscc-qr-events', {
