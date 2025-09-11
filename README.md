@@ -1,7 +1,9 @@
 # NSCC QR Event Management System
 
 A comprehensive event registration and attendance management system using QR codes, built with React.js frontend and Node.js backend.
+Demo Url: https://nscc-frontend.vercel.app/
 
+Video Demo: https://drive.google.com/file/d/1-kjh8Ug-qF8dTXZQ_mnSZS0USQGopjtn/view
 ## Features
 
 ### Frontend (User Side)
