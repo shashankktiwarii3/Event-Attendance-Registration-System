@@ -3,7 +3,7 @@ const Participant = require('../models/Participant');
 const Attendance = require('../models/Attendance');
 
 // MongoDB connection string
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://shashank:0eqNi0glGAfokSCv@cluster0.tcnnfu6.mongodb.net/nscc-qr-events';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://shashank:0eqNi0glGAfokSCv@cluster0.tcnnfu6.mongodb.net/qr-events';
 
 async function deleteAllData() {
   try {
@@ -51,3 +51,6 @@ async function deleteAllData() {
 
 // Run the script
 deleteAllData();
+
+
+

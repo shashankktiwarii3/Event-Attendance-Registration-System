@@ -38,3 +38,4 @@ participantSchema.index({ email: 1 });
 
 module.exports = mongoose.model('Participant', participantSchema);
 
+

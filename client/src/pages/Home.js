@@ -135,7 +135,7 @@ const Home = () => {
   return (
     <div>
       <Hero>
-        <HeroTitle>NSCC QR Event Management</HeroTitle>
+        <HeroTitle>QR Event Management</HeroTitle>
         <HeroSubtitle>
           Streamline your event registration and attendance tracking with QR codes
         </HeroSubtitle>

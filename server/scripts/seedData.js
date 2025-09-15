@@ -71,7 +71,7 @@ const sampleParticipants = [
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nscc-qr-events');
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/qr-events');
     console.log('MongoDB connected successfully');
   } catch (error) {
     console.error('MongoDB connection error:', error);
@@ -93,7 +93,7 @@ const seedParticipants = async () => {
     
     for (const participantData of sampleParticipants) {
       // Generate unique registration ID
-      const registrationId = `NSCC-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      const registrationId = `ABDC-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
       
       // Create QR code data
       const qrData = {

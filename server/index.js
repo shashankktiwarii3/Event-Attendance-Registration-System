@@ -15,6 +15,7 @@ app.use(cors({
     'https://nscc-frontend-2nvam47y1-shashank-tiwaris-projects-fefdbac7.vercel.app',
     'https://nscc-frontend.vercel.app',
     'https://nscc-frontend-nyq59yd4i-shashank-tiwaris-projects-fefdbac7.vercel.app',
+    'https://eventmanagerfrontendshashank.vercel.app',
     'https://*.vercel.app'
   ],
   credentials: true
@@ -29,7 +30,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/seed', require('./routes/seed'));
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nscc-qr-events', {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/qr-events', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
@@ -38,7 +39,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nscc-qr-e
 
 // Basic route
 app.get('/', (req, res) => {
-  res.json({ message: 'NSCC QR Event Management System API' });
+  res.json({ message: 'QR Event Management System API' });
 });
 
 // Error handling middleware

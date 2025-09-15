@@ -246,6 +246,11 @@ const AdminDashboard = () => {
       console.log('Fetching dashboard data from:', `${API_ENDPOINTS.ADMIN}/dashboard`);
       const response = await axios.get(`${API_ENDPOINTS.ADMIN}/dashboard`);
       console.log('Dashboard data received:', response.data);
+      console.log('Today data:', response.data.today);
+      console.log('Total Attended:', response.data.today?.totalAttended);
+      console.log('Present:', response.data.today?.present);
+      console.log('Absent:', response.data.today?.absent);
+      console.log('Attendance Rate:', response.data.today?.attendanceRate);
       setDashboardData(response.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -383,6 +388,10 @@ const AdminDashboard = () => {
     );
   }
 
+  // Debug: Log the current dashboard data
+  console.log('Current dashboardData:', dashboardData);
+  console.log('DashboardData today:', dashboardData?.today);
+
   return (
     <Container>
       <Title>
@@ -405,6 +414,9 @@ const AdminDashboard = () => {
           </StatIcon>
           <StatNumber>{dashboardData?.today?.totalAttended || 0}</StatNumber>
           <StatLabel>Total Attended</StatLabel>
+          <div style={{fontSize: '1.2rem', fontWeight: 'bold', color: '#28a745', marginTop: '0.5rem'}}>
+            {Number(dashboardData?.today?.attendanceRate || 0).toFixed(1)}%
+          </div>
           {dashboardData?.trends && (
             <TrendIndicator direction={dashboardData.trends.direction}>
               {dashboardData.trends.direction === 'up' && <TrendingUp size={16} />}
@@ -415,6 +427,13 @@ const AdminDashboard = () => {
           )}
         </StatCard>
 
+        <StatCard>
+          <StatIcon color="orange">
+            <UserCheck size={30} />
+          </StatIcon>
+          <StatNumber>{dashboardData?.today?.present || 0}</StatNumber>
+          <StatLabel>Present</StatLabel>
+        </StatCard>
 
         <StatCard>
           <StatIcon color="red">
@@ -425,17 +444,6 @@ const AdminDashboard = () => {
         </StatCard>
       </StatsGrid>
 
-      <StatsGrid>
-        <StatCard>
-          <StatNumber>{dashboardData?.today?.attendanceRate || 0}%</StatNumber>
-          <StatLabel>Attendance Rate</StatLabel>
-        </StatCard>
-
-        <StatCard>
-          <StatNumber>{dashboardData?.today?.present || 0}</StatNumber>
-          <StatLabel>Present</StatLabel>
-        </StatCard>
-      </StatsGrid>
 
       <ControlsCard>
         <div>

@@ -1,5 +1,5 @@
 // Get API base URL from environment or use default
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://nscc-backend-9rfad6hit-shashank-tiwaris-projects-fefdbac7.vercel.app';
 
 // Log the API URL for debugging
 console.log('Environment REACT_APP_API_URL:', process.env.REACT_APP_API_URL);

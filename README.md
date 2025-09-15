@@ -1,9 +1,7 @@
-# NSCC QR Event Management System
+# QR Event Management System
 
 A comprehensive event registration and attendance management system using QR codes, built with React.js frontend and Node.js backend.
-Demo Url: https://nscc-frontend.vercel.app/
 
-Video Demo: https://drive.google.com/file/d/1-kjh8Ug-qF8dTXZQ_mnSZS0USQGopjtn/view
 ## Features
 
 ### Frontend (User Side)
@@ -97,7 +95,7 @@ mongod
 Update the database connection in `server/config.env`:
 ```env
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/nscc-qr-events
+MONGODB_URI=mongodb://localhost:27017/qr-events
 NODE_ENV=development
 ```
 
@@ -122,7 +120,7 @@ node scripts/seedData.js
 
 **Method 2: Using MongoDB Compass (GUI)**
 1. Open MongoDB Compass
-2. Connect to your database (`mongodb://localhost:27017/nscc-qr-events`)
+2. Connect to your database (`mongodb://localhost:27017/qr-events`)
 3. Navigate to the `participants` collection
 4. Click "Add Data" → "Insert Document"
 5. Add participant data in JSON format:
@@ -130,7 +128,7 @@ node scripts/seedData.js
 {
   "name": "Your Name",
   "email": "your.email@example.com",
-  "registrationId": "NSCC-1234567890-ABC12",
+  "registrationId": "ABDC-1234567890-ABC12",
   "qrCode": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
   "registeredAt": "2024-01-15T10:30:00.000Z"
 }
@@ -142,13 +140,13 @@ node scripts/seedData.js
 mongosh
 
 # Use the database
-use nscc-qr-events
+use qr-events
 
 # Insert a participant
 db.participants.insertOne({
   name: "Test User",
   email: "test@example.com",
-  registrationId: "NSCC-1234567890-TEST1",
+  registrationId: "ABDC-1234567890-TEST1",
   qrCode: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
   registeredAt: new Date()
 })
@@ -156,7 +154,7 @@ db.participants.insertOne({
 # Insert attendance record
 db.attendance.insertOne({
   participantId: ObjectId("..."), // Use actual participant ID
-  registrationId: "NSCC-1234567890-TEST1",
+  registrationId: "ABDC-1234567890-TEST1",
   name: "Test User",
   email: "test@example.com",
   status: "present",
@@ -173,14 +171,14 @@ db.attendance.insertOne({
   {
     "name": "Ram Kumar",
     "email": "ram.kumar@example.com",
-    "registrationId": "NSCC-1234567890-RAM01",
+    "registrationId": "ABDC-1234567890-RAM01",
     "qrCode": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
     "registeredAt": "2024-01-15T10:30:00.000Z"
   },
   {
     "name": "Priya Sharma",
     "email": "priya.sharma@example.com",
-    "registrationId": "NSCC-1234567890-PRI01",
+    "registrationId": "ABDC-1234567890-PRI01",
     "qrCode": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
     "registeredAt": "2024-01-15T10:35:00.000Z"
   }
@@ -189,7 +187,7 @@ db.attendance.insertOne({
 
 2. Import using mongoimport:
 ```bash
-mongoimport --db nscc-qr-events --collection participants --file participants.json --jsonArray
+mongoimport --db qr-events --collection participants --file participants.json --jsonArray
 ```
 
 **Method 5: Custom Seed Script**
@@ -209,7 +207,7 @@ const customParticipants = [
 
 const seedCustomData = async () => {
   try {
-    await mongoose.connect('mongodb://localhost:27017/nscc-qr-events');
+    await mongoose.connect('mongodb://localhost:27017/qr-events');
     
     // Clear existing data
     await Participant.deleteMany({});
@@ -217,7 +215,7 @@ const seedCustomData = async () => {
     
     // Insert custom participants
     for (const participantData of customParticipants) {
-      const registrationId = `NSCC-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      const registrationId = `ABCD-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
       
       const participant = new Participant({
         name: participantData.name,
@@ -258,7 +256,7 @@ const mongoose = require('mongoose');
 const Participant = require('./models/Participant');
 const Attendance = require('./models/Attendance');
 
-mongoose.connect('mongodb://localhost:27017/nscc-qr-events').then(async () => {
+mongoose.connect('mongodb://localhost:27017/qr-events').then(async () => {
   await Participant.deleteMany({});
   await Attendance.deleteMany({});
   console.log('All data cleared!');
@@ -270,31 +268,31 @@ mongoose.connect('mongodb://localhost:27017/nscc-qr-events').then(async () => {
 **View Current Data:**
 ```bash
 # View participants count
-mongosh --eval "use nscc-qr-events; db.participants.countDocuments()"
+mongosh --eval "use qr-events; db.participants.countDocuments()"
 
 # View attendance count
-mongosh --eval "use nscc-qr-events; db.attendance.countDocuments()"
+mongosh --eval "use qr-events; db.attendance.countDocuments()"
 
 # View all participants
-mongosh --eval "use nscc-qr-events; db.participants.find().pretty()"
+mongosh --eval "use qr-events; db.participants.find().pretty()"
 ```
 
 **Backup Data:**
 ```bash
 # Export participants
-mongoexport --db nscc-qr-events --collection participants --out participants_backup.json
+mongoexport --db qr-events --collection participants --out participants_backup.json
 
 # Export attendance
-mongoexport --db nscc-qr-events --collection attendance --out attendance_backup.json
+mongoexport --db qr-events --collection attendance --out attendance_backup.json
 ```
 
 **Restore Data:**
 ```bash
 # Import participants
-mongoimport --db nscc-qr-events --collection participants --file participants_backup.json
+mongoimport --db qr-events --collection participants --file participants_backup.json
 
 # Import attendance
-mongoimport --db nscc-qr-events --collection attendance --file attendance_backup.json
+mongoimport --db qr-events --collection attendance --file attendance_backup.json
 ```
 
 ### 6. Start the Application
@@ -331,7 +329,7 @@ The application will be available at:
 
 ### 3. Admin Dashboard
 - Navigate to `/admin`
-- Login with admin credentials (demo: nscc_admin / secure123)
+- Login with admin credentials (demo: admin / secure123)
 - View real-time attendance statistics
 - Monitor live attendance feed
 - Export attendance data to Excel
@@ -369,7 +367,7 @@ The application will be available at:
 
 The system includes 15 sample participants with Indian names for testing.
 
-Sample Registration IDs format: `NSCC-{timestamp}-{random}`
+Sample Registration IDs format: `ABDC-{timestamp}-{random}`
 
 ## Features in Detail
 
@@ -415,7 +413,7 @@ Sample Registration IDs format: `NSCC-{timestamp}-{random}`
 3. **QR scanner not detecting**: Ensure good lighting and clear QR codes
 4. **Export not working**: Check browser download permissions
 5. **QR download not working**: Try refreshing the page or use manual copy option
-6. **Admin login issues**: Use demo credentials (nscc_admin / secure123)
+6. **Admin login issues**: Use demo credentials (admin / secure123)
 
 ### Development
 

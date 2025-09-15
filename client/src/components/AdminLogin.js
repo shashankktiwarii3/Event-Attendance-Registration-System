@@ -124,7 +124,7 @@ const AdminLogin = ({ onLogin }) => {
     try {
       // Simple authentication - in production, this should be handled by the backend
       const validCredentials = {
-        username: 'nscc_admin',
+        username: 'admin',
         password: 'secure123'
       };
 
@@ -210,7 +210,7 @@ const AdminLogin = ({ onLogin }) => {
           border: '1px solid #4a5568'
         }}>
           <strong>Demo Credentials:</strong><br />
-          Username: <code>nscc_admin</code><br />
+          Username: <code>admin</code><br />
           Password: <code>secure123</code>
         </div>
       </LoginCard>

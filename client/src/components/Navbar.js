@@ -58,7 +58,7 @@ const Navbar = () => {
   return (
     <Nav>
       <NavContainer>
-        <Logo to="/">NSCC QR Events</Logo>
+        <Logo to="/">QR Events</Logo>
         <NavLinks>
           <NavLink to="/" active={location.pathname === '/' ? 1 : 0}>
             Home

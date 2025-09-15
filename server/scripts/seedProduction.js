@@ -4,7 +4,7 @@ const Attendance = require('../models/Attendance');
 const QRCode = require('qrcode');
 
 // Use production MongoDB URI
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/nscc-qr-events';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/qr-events';
 
 const sampleParticipants = [
   { name: "Ram Kumar", email: "ram.kumar@example.com" },
@@ -37,7 +37,7 @@ const seedProductionData = async () => {
 
     // Create participants
     for (const participantData of sampleParticipants) {
-      const registrationId = `NSCC-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      const registrationId = `ABDC-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
       
       // Generate QR code
       const qrCodeDataURL = await QRCode.toDataURL(registrationId);
@@ -86,3 +86,6 @@ const seedProductionData = async () => {
 };
 
 seedProductionData();
+
+
+

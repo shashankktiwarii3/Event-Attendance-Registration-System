@@ -5,7 +5,7 @@ const Attendance = require('../models/Attendance');
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nscc-qr-events');
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/qr-events');
     console.log('MongoDB connected successfully');
   } catch (error) {
     console.error('MongoDB connection error:', error);
@@ -52,4 +52,7 @@ if (require.main === module) {
 }
 
 module.exports = { cleanupLateStatus };
+
+
+
 

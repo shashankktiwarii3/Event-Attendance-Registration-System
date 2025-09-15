@@ -523,7 +523,7 @@ const Scanner = () => {
           <form onSubmit={handleManualSubmit}>
             <Input
               type="text"
-              placeholder="Enter Registration ID (e.g., NSCC-123456-ABC12)"
+              placeholder="Enter Registration ID (e.g., ABCD-123456-ABC12)"
               value={manualId}
               onChange={(e) => setManualId(e.target.value)}
             />

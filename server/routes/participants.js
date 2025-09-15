@@ -23,7 +23,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Generate unique registration ID
-    const registrationId = `NSCC-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+    const registrationId = `ABDC-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
     
     // Create QR code data
     const qrData = JSON.stringify({

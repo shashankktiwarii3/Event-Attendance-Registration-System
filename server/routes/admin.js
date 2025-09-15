@@ -8,22 +8,24 @@ const moment = require('moment');
 // Get dashboard statistics (simplified to avoid timeouts)
 router.get('/dashboard', async (req, res) => {
   try {
-    const today = moment().startOf('day').toDate();
-    const todayEnd = moment().endOf('day').toDate();
-
-    // Simplified queries to avoid aggregation timeouts
+    // Get all participants
     const totalRegistered = await Participant.countDocuments();
-    const totalAttendance = await Attendance.countDocuments();
     
-    // Get today's attendance count (simplified)
-    const todayAttendanceCount = await Attendance.countDocuments({
-      timestamp: { $gte: today, $lt: todayEnd }
-    });
-
-    // Get present count for today
-    const todayPresentCount = await Attendance.countDocuments({
-      timestamp: { $gte: today, $lt: todayEnd },
-      status: 'present'
+    // Get all attendance records (same logic as live feed)
+    const attendanceRecords = await Attendance.find();
+    
+    // Count present attendees
+    const presentCount = attendanceRecords.filter(record => record.status === 'present').length;
+    const totalAttended = attendanceRecords.length;
+    const absentCount = totalRegistered - presentCount;
+    
+    // Debug logging
+    console.log('Dashboard Debug:', {
+      totalRegistered,
+      presentCount,
+      totalAttended,
+      absentCount,
+      attendanceRate: totalRegistered > 0 ? Math.round(((presentCount / totalRegistered) * 100) * 100) / 100 : 0
     });
 
     // Get recent attendance (last 10 records) - simplified
@@ -36,10 +38,10 @@ router.get('/dashboard', async (req, res) => {
     res.json({
       today: {
         totalRegistered,
-        totalAttended: todayAttendanceCount,
-        present: todayPresentCount,
-        absent: totalRegistered - todayPresentCount,
-        attendanceRate: totalRegistered > 0 ? ((todayPresentCount / totalRegistered) * 100).toFixed(2) : 0
+        totalAttended,
+        present: presentCount,
+        absent: absentCount,
+        attendanceRate: totalRegistered > 0 ? Math.round(((presentCount / totalRegistered) * 100) * 100) / 100 : 0
       },
       yesterday: {
         totalAttended: 0, // Simplified - not calculating yesterday for now

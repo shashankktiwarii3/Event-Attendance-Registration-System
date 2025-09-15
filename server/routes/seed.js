@@ -31,7 +31,7 @@ router.post('/seed-data', async (req, res) => {
     
     // Create participants
     for (const participantData of sampleParticipants) {
-      const registrationId = `NSCC-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      const registrationId = `ABDC-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
       
       // Generate QR code
       const qrCodeDataURL = await QRCode.toDataURL(registrationId);
@@ -83,3 +83,6 @@ router.post('/seed-data', async (req, res) => {
 });
 
 module.exports = router;
+
+
+

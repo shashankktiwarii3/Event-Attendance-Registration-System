@@ -1,6 +1,6 @@
 {
-  "short_name": "NSCC QR",
-  "name": "NSCC QR Event Management System",
+  "short_name": "QR",
+  "name": "QR Event Management System",
   "icons": [
     {
       "src": "favicon.ico",
@@ -13,4 +13,7 @@
   "theme_color": "#000000",
   "background_color": "#ffffff"
 }
+
+
+
 

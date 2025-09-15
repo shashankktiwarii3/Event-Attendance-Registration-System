@@ -1,5 +1,5 @@
 {
-  "name": "nscc-qr-server",
+  "name": "qr-server",
   "version": "1.0.0",
   "description": "Backend server for QR event management system",
   "main": "index.js",
@@ -21,4 +21,5 @@
     "nodemon": "^3.0.2"
   }
 }
+
 
